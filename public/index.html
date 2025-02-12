@@ -1,0 +1,184 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title></title>
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+}
+
+.chat-container {
+    max-width: 600px;
+    margin: auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.messages {
+    height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+
+.messages > div {
+    margin: 5px 0;
+    padding: 3px 5px;
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 0.35rem;
+}
+.messages p {
+    margin: 3px 0;
+}
+.msgcontrol {
+    display: flex;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    padding: 10px;
+    border: none;
+    background-color: #28a745;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: .5rem;
+}
+
+button:hover {
+    background-color: #218838;
+}
+
+.loading {
+    margin-top: .2rem;
+}
+    </style>
+
+</head>
+
+<body>
+    <div class="chat-container">
+        <div id="messages" class="messages"></div>
+        <div class="msgcontrol">
+            <input type="text" id="messageInput" placeholder="Type your message here..." />
+            <button id="sendButton">Send</button>
+        </div>
+        <div class="loading" id="loading" style="display: none;"><small>Loading...</small></div> 
+
+    </div>
+
+    <script src="axios.min.js"></script>
+    <script src="marked.min.js"></script>
+<script>
+
+async function fetchPost(msg) {
+    let  _data = null;
+    const res = await axios.post(`http://localhost:3000/api/generate`, {
+        prompt: msg
+    }).catch(function (error) {
+        console.log(error);
+    });
+
+    if (res && res.status == 200) _data = res.data;
+
+    return _data;
+}
+
+const sendButton = document.getElementById('sendButton');
+const messageInput = document.getElementById('messageInput');
+const loadingDiv = document.getElementById('loading');
+
+const sendMessage = async () => {
+    const message = messageInput.value;
+
+    if (message.trim() === '') {
+        return;
+    }
+
+    // user message
+    const inputMsg = marked.parse(`**You:** ${message}`);
+    displayMessage(inputMsg);
+
+    // loading
+    loadingDiv.style.display = 'inline-block';
+
+
+    try {
+        const res = await fetchPost(message);
+        console.log(res);
+
+        // loading
+        loadingDiv.style.display = 'none';
+
+        // reply
+        const reply = res.reply;
+        const replyRes = `**AI:** ${reply}`;
+        const outMsg = marked.parse(replyRes);
+        displayMessage(outMsg);
+        
+    } catch (error) {
+
+        // loading
+        loadingDiv.style.display = 'none';
+        
+        console.error('Error sending message:', error);
+        displayMessage('Error: Unable to send message.');
+    }
+
+    // clear
+    messageInput.value = '';
+};
+const debouncedSendMessage = debounce(sendMessage, 300);
+
+function debounce(func, delay) {
+    let timeoutId;
+    return function(...args) {
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+        timeoutId = setTimeout(() => {
+            func.apply(this, args);
+        }, delay);
+    };
+}
+
+function displayMessage(message) {
+    const messagesDiv = document.getElementById('messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.innerHTML = message;
+    messagesDiv.appendChild(messageDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+sendButton.addEventListener('click', debouncedSendMessage);
+
+messageInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        debouncedSendMessage();
+    }
+});
+
+</script>
+
+    
+</body>
+
+</html>
