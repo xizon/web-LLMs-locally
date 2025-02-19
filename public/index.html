@@ -88,7 +88,11 @@ button:hover {
     <script src="marked.min.js"></script>
 <script>
 
+
 async function fetchPost(msg) {
+
+    // Default
+    //======================
     let  _data = null;
     const res = await axios.post(`http://localhost:3000/api/generate`, {
         prompt: msg
@@ -99,6 +103,24 @@ async function fetchPost(msg) {
     if (res && res.status == 200) _data = res.data;
 
     return _data;
+
+
+    // if stream is true, for browser (ollama's API)
+    //======================
+    // const response = await fetch(`http://localhost:11434/api/generate`, {
+    //     method: 'POST',
+    //     headers: {
+    //         'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify({
+    //         model: modelName.current,
+    //         prompt: msg,
+    //         stream: true
+    //     }),
+    // });
+
+    // return response;
+
 }
 
 const sendButton = document.getElementById('sendButton');
@@ -127,11 +149,55 @@ const sendMessage = async () => {
         // loading
         loadingDiv.style.display = 'none';
 
-        // reply
+
+        // reply (normal)
+        //======================
         const reply = res.reply;
         const replyRes = `**AI:** ${reply}`;
         const outMsg = marked.parse(replyRes);
         displayMessage(outMsg);
+
+
+        // stream
+        //======================
+        // const reader = res.body.getReader();
+        // const decoder = new TextDecoder();
+        // let done = false;
+        // let partialText = '';
+        // let jsonData = '';
+
+        // const streamHandler = async () => {
+        //     while (!done) {
+        //         const { value, done: doneReading } = await reader.read();
+        //         done = doneReading;
+                
+        //         const text = decoder.decode(value, { stream: true });
+        //         jsonData += text;
+                
+        //         try {
+        //             while (jsonData) {
+        //                 const endOfJSON = jsonData.indexOf('}');
+        //                 if (endOfJSON !== -1) {
+        //                     const validJson = jsonData.slice(0, endOfJSON + 1);
+        //                     jsonData = jsonData.slice(endOfJSON + 1);
+
+        //                     const parsedData = JSON.parse(validJson);
+
+        //                     // update to div
+        //                     partialText += parsedData.response;
+        //                 } else {
+        //                     break;
+        //                 }
+        //             }
+        //         } catch (e) {
+        //             console.error('JSON parsing error: ', e);
+        //         }
+
+        //     }
+        // };
+
+        // streamHandler();
+
         
     } catch (error) {
 
