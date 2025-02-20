@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <title></title>
     <style>
-        body {
+body {
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
     margin: 0;
@@ -45,6 +45,12 @@
     display: flex;
 }
 
+.messages .timestamp {
+    display: block;
+    color: #979797;
+    text-align: right;
+}
+
 input[type="text"] {
     width: 100%;
     padding: 10px;
@@ -74,6 +80,7 @@ button:hover {
 </head>
 
 <body>
+    <div id="test"></div>
     <div class="chat-container">
         <div id="messages" class="messages"></div>
         <div class="msgcontrol">
@@ -88,6 +95,7 @@ button:hover {
     <script src="marked.min.js"></script>
 <script>
 
+const messages = []; // Array to hold messages
 
 async function fetchPost(msg) {
 
@@ -134,16 +142,22 @@ const sendMessage = async () => {
         return;
     }
 
-    // user message
-    const inputMsg = marked.parse(`**You:** ${message}`);
-    displayMessage(inputMsg);
+    // User message
+    const inputMsg = `${message}`;
+    const timeStart = new Date().toLocaleTimeString(); // Get the current time
+    messages.push({ sender: 'Me', type: 'send', timestamp: timeStart, content: inputMsg }); // Add user message to array
+    renderMessages(); // Render messages
 
-    // loading
+    // Loading
     loadingDiv.style.display = 'inline-block';
 
+    // clear
+    messageInput.value = '';
 
     try {
         const res = await fetchPost(message);
+        const timeEnd = new Date().toLocaleTimeString(); // Get the current time
+
         console.log(res);
 
         // loading
@@ -153,9 +167,10 @@ const sendMessage = async () => {
         // reply (normal)
         //======================
         const reply = res.reply;
-        const replyRes = `**AI:** ${reply}`;
+        const replyRes = `${reply}`;
         const outMsg = marked.parse(replyRes);
-        displayMessage(outMsg);
+        messages.push({ sender: 'AI', type: 'reply', timestamp: timeEnd, content: outMsg }); // Add AI reply to array
+        renderMessages(); // Render messages
 
 
         // stream
@@ -205,11 +220,10 @@ const sendMessage = async () => {
         loadingDiv.style.display = 'none';
         
         console.error('Error sending message:', error);
-        displayMessage('Error: Unable to send message.');
+        messages.push({ sender: 'Error', type: 'reply', timestamp: timeStart, content: `Error: Unable to send message: ${error}` }); // Add error message to array
+        renderMessages(); // Render messages
     }
 
-    // clear
-    messageInput.value = '';
 };
 const debouncedSendMessage = debounce(sendMessage, 300);
 
@@ -225,14 +239,70 @@ function debounce(func, delay) {
     };
 }
 
-function displayMessage(message) {
-    const messagesDiv = document.getElementById('messages');
-    const messageDiv = document.createElement('div');
-    messageDiv.innerHTML = message;
-    messagesDiv.appendChild(messageDiv);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+function typewriterEffect(element, str, speed = 50) {
+    if (!element) return;
+
+    const originalHTML = str;
+    element.innerHTML = '';
+
+    let cursor = 0;
+    let tempHTML = '';
+    const tagStack = [];
+
+    function type() {
+        if (cursor >= originalHTML.length) {
+            // Clear the cursor after typing is complete
+            element.innerHTML = tempHTML; // Set the final content without the cursor
+            return;
+        }
+
+        const currentChar = originalHTML[cursor];
+
+        if (currentChar === '<') {
+            const closeTagIndex = originalHTML.indexOf('>', cursor);
+            const tagContent = originalHTML.slice(cursor, closeTagIndex + 1);
+            tempHTML += tagContent;
+
+            // Handle opening and closing tags
+            if (/^<\/?\w+/.test(tagContent)) {
+                if (!/^<\//.test(tagContent)) {
+                    // Opening tag
+                    tagStack.push(tagContent);
+                } else {
+                    // Closing tag
+                    tagStack.pop();
+                }
+            }
+
+            cursor = closeTagIndex + 1;
+        } else {
+            tempHTML += currentChar;
+            cursor++;
+        }
+
+        element.innerHTML = tempHTML + '<span class="cursor">|</span>'; // Show cursor
+        setTimeout(type, speed);
+    }
+
+    type();
 }
 
+
+function renderMessages() {
+    const messagesDiv = document.getElementById('messages');
+    messagesDiv.innerHTML = ''; // Clear existing messages
+    messages.forEach((msg, index) => {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add(msg.type);
+        messageDiv.innerHTML = `<strong>${msg.sender}:</strong> <div class="content">${msg.content}</div> <span class="timestamp">${msg.timestamp}</span>`;
+        messagesDiv.appendChild(messageDiv);
+
+        if (msg.type === 'reply' && index === messages.length - 1) {
+            typewriterEffect([].slice.call(messagesDiv.querySelectorAll('.reply')).at(-1).querySelector('.content'), msg.content, 10);
+        }
+    });
+    messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to the bottom
+}
 sendButton.addEventListener('click', debouncedSendMessage);
 
 messageInput.addEventListener('keydown', (event) => {
