@@ -12,6 +12,11 @@ body {
     padding: 20px;
 }
 
+:root {
+    --app-ai-chat-primary-color: #218838;
+    --app-ai-chat-msg-dotted-loader-size: 12.5px;
+}
+
 .chat-container {
     max-width: 600px;
     margin: auto;
@@ -61,7 +66,7 @@ input[type="text"] {
 button {
     padding: 10px;
     border: none;
-    background-color: #28a745;
+    background-color: var(--app-ai-chat-primary-color);
     color: white;
     border-radius: 4px;
     cursor: pointer;
@@ -69,12 +74,64 @@ button {
 }
 
 button:hover {
-    background-color: #218838;
+    transform: scale(1.1);
 }
 
-.loading {
-    margin-top: .2rem;
+.msg-dotted-loader-container {
+        display: flex;
+        align-items: center;
+        margin-top: .4rem;
+        color: var(--app-ai-chat-primary-color);
+    }
+.msg-dotted-loader-text {
+    transform: translateY(-10%);
 }
+.msg-dotted-loader {
+    position: relative;
+    text-align: center;
+    display: inline-block;
+    width: calc(var(--app-ai-chat-msg-dotted-loader-size) * 1.5);
+    height: calc(var(--app-ai-chat-msg-dotted-loader-size) * 1.5);
+    margin-right: .3rem;
+}
+.msg-dotted-loader::after ,
+.msg-dotted-loader::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--app-ai-chat-msg-dotted-loader-size);
+    height: var(--app-ai-chat-msg-dotted-loader-size);
+    border-radius: 50%;
+    border: 2px var(--app-ai-chat-primary-color);
+    border-style: dotted solid dotted solid;
+    animation: turn-left 1.5s linear infinite;
+}
+.msg-dotted-loader::before {
+    left: calc(var(--app-ai-chat-msg-dotted-loader-size)/2/2 * -1);
+    top: calc(var(--app-ai-chat-msg-dotted-loader-size)/2/2 * -1);
+    width: calc(var(--app-ai-chat-msg-dotted-loader-size) + var(--app-ai-chat-msg-dotted-loader-size)/2);
+    height: calc(var(--app-ai-chat-msg-dotted-loader-size) + var(--app-ai-chat-msg-dotted-loader-size)/2);
+    border-style: dotted dotted solid solid;
+    animation: msg-dotted-loader-anim--turn-right 1.5s linear infinite;
+}
+@keyframes msg-dotted-loader-anim--turn-right {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+@keyframes turn-left {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(-360deg);
+    }
+}
+
     </style>
 
 </head>
@@ -87,8 +144,6 @@ button:hover {
             <input type="text" id="messageInput" placeholder="Type your message here..." />
             <button id="sendButton">Send</button>
         </div>
-        <div class="loading" id="loading" style="display: none;"><small>Loading...</small></div> 
-
     </div>
 
     <script src="axios.min.js"></script>
@@ -96,6 +151,41 @@ button:hover {
 <script>
 
 const messages = []; // Array to hold messages
+
+let loadingTimer; // Timer for loading state
+let loadingTime = 0; // Elapsed time in seconds
+
+function clearElapsedTime() {
+    // Stop loading timer
+    clearInterval(loadingTimer);
+    document.querySelector('.msg-dotted-loader-container > i').innerHTML = ' (0s)';
+    loadingTime = 0;
+
+}
+
+function startElapsedTime() {
+    loadingTimer = setInterval(() => {
+        loadingTime++;
+        document.querySelector('.msg-dotted-loader-container > i').innerHTML = ` (${loadingTime}s)`;
+    }, 1000);
+}
+
+
+function startLoading() {
+    // push loading for message item
+    messages.push({ sender: 'AI', type: 'reply', timestamp:  new Date().toLocaleTimeString(), content: '<div class="msg-dotted-loader-container "><span class="msg-dotted-loader"></span><span class="msg-dotted-loader-text">Thinking...</span><i> (0s)</i></div>' }); // Add AI reply to array
+
+    // start elapsedTime
+    startElapsedTime();
+}
+
+function stopLoading() {
+    // remove loading for message item
+    messages.pop();
+
+    // clear elapsedTime
+    clearElapsedTime();
+}
 
 async function fetchPost(msg) {
 
@@ -115,19 +205,21 @@ async function fetchPost(msg) {
 
     // if stream is true, for browser (ollama's API)
     //======================
-    // const response = await fetch(`http://localhost:11434/api/generate`, {
-    //     method: 'POST',
-    //     headers: {
-    //         'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify({
-    //         model: modelName.current,
-    //         prompt: msg,
-    //         stream: true
-    //     }),
-    // });
+    /*
+    const response = await fetch(`http://localhost:11434/api/generate`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            model: modelName.current,
+            prompt: msg,
+            stream: true
+        }),
+    });
 
-    // return response;
+    return response;
+    */
 
 }
 
@@ -146,10 +238,13 @@ const sendMessage = async () => {
     const inputMsg = `${message}`;
     const timeStart = new Date().toLocaleTimeString(); // Get the current time
     messages.push({ sender: 'Me', type: 'send', timestamp: timeStart, content: inputMsg }); // Add user message to array
-    renderMessages(); // Render messages
 
-    // Loading
-    loadingDiv.style.display = 'inline-block';
+    // start loading
+    startLoading();
+
+
+    // Render messages
+    renderMessages(); 
 
     // clear
     messageInput.value = '';
@@ -160,8 +255,9 @@ const sendMessage = async () => {
 
         console.log(res);
 
-        // loading
-        loadingDiv.style.display = 'none';
+
+        // stop loading
+        stopLoading();
 
 
         // reply (normal)
@@ -170,58 +266,64 @@ const sendMessage = async () => {
         const replyRes = `${reply}`;
         const outMsg = marked.parse(replyRes);
         messages.push({ sender: 'AI', type: 'reply', timestamp: timeEnd, content: outMsg }); // Add AI reply to array
-        renderMessages(); // Render messages
+
+         // Render messages
+        renderMessages();
 
 
         // stream
         //======================
-        // const reader = res.body.getReader();
-        // const decoder = new TextDecoder();
-        // let done = false;
-        // let partialText = '';
-        // let jsonData = '';
+        /*
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let done = false;
+        let partialText = '';
+        let jsonData = '';
 
-        // const streamHandler = async () => {
-        //     while (!done) {
-        //         const { value, done: doneReading } = await reader.read();
-        //         done = doneReading;
+        const streamHandler = async () => {
+            while (!done) {
+                const { value, done: doneReading } = await reader.read();
+                done = doneReading;
                 
-        //         const text = decoder.decode(value, { stream: true });
-        //         jsonData += text;
+                const text = decoder.decode(value, { stream: true });
+                jsonData += text;
                 
-        //         try {
-        //             while (jsonData) {
-        //                 const endOfJSON = jsonData.indexOf('}');
-        //                 if (endOfJSON !== -1) {
-        //                     const validJson = jsonData.slice(0, endOfJSON + 1);
-        //                     jsonData = jsonData.slice(endOfJSON + 1);
+                try {
+                    while (jsonData) {
+                        const endOfJSON = jsonData.indexOf('}');
+                        if (endOfJSON !== -1) {
+                            const validJson = jsonData.slice(0, endOfJSON + 1);
+                            jsonData = jsonData.slice(endOfJSON + 1);
 
-        //                     const parsedData = JSON.parse(validJson);
+                            const parsedData = JSON.parse(validJson);
 
-        //                     // update to div
-        //                     partialText += parsedData.response;
-        //                 } else {
-        //                     break;
-        //                 }
-        //             }
-        //         } catch (e) {
-        //             console.error('JSON parsing error: ', e);
-        //         }
+                            // update to div
+                            partialText += parsedData.response;
+                        } else {
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    console.error('JSON parsing error: ', e);
+                }
 
-        //     }
-        // };
+            }
+        };
 
-        // streamHandler();
+        streamHandler();
+        */
 
         
     } catch (error) {
 
-        // loading
-        loadingDiv.style.display = 'none';
-        
+        // stop loading
+        stopLoading();
+
         console.error('Error sending message:', error);
         messages.push({ sender: 'Error', type: 'reply', timestamp: timeStart, content: `Error: Unable to send message: ${error}` }); // Add error message to array
-        renderMessages(); // Render messages
+
+         // Render messages
+        renderMessages();
     }
 
 };
