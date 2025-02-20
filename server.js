@@ -35,7 +35,7 @@ router.post('/generate', async (req, res) => {
 
         /*
         const response = await ollama.chat({
-            model: 'deepseek-r1:14b-qwen-distill-q4_K_M',  // llama3.2:1b
+            model: 'deepseek-r1:14b-qwen-distill-q4_K_M',  // llama3.1:8b
             messages: [{ role: 'user', content: prompt }],
         });
 

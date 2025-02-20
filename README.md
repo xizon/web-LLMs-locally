@@ -5,10 +5,10 @@ Running and Creating Your Own LLMs Locally.
 
 ### Preparation:
 
-Make sure you have downloaded `llama3.2:1b`, if not, run:
+Make sure you have downloaded `llama3.1:8b`, if not, run:
 
 ```sh
-$ ollama run llama3.2:1b
+$ ollama run llama3.1:8b
 ```
 
 ### Customize the Model
@@ -18,7 +18,7 @@ Access the model file to understand its structure and parameters. Use ollama hel
 
 ```sh
 $ cd ./web-llms-locally
-$ ollama show llama3.2:1b --modelfile > myllama.modelfile
+$ ollama show llama3.1:8b --modelfile > myllama.modelfile
 ```
 
 
@@ -66,6 +66,11 @@ $ ollama list
 ```
 
 ### Test:
+
+run
+```sh
+$ npm start
+```
 
 With is command file will be compiled and it will be loaded on local server [http://localhost:3000/home](http://localhost:3000/home)
 

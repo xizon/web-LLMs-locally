@@ -1,0 +1,126 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+}
+
+:root {
+    --app-ai-chat-primary-color: #218838;
+    --app-ai-chat-msg-dotted-loader-size: 12.5px;
+}
+
+.chat-container {
+    max-width: 600px;
+    margin: auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.messages {
+    height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+
+.messages > div {
+    margin: 5px 0;
+    padding: 3px 5px;
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 0.35rem;
+}
+.messages p {
+    margin: 3px 0;
+}
+.msgcontrol {
+    display: flex;
+}
+
+.messages .timestamp {
+    display: block;
+    color: #979797;
+    text-align: right;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    padding: 10px;
+    border: none;
+    background-color: var(--app-ai-chat-primary-color);
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: .5rem;
+}
+
+button:hover {
+    transform: scale(1.1);
+}
+
+.msg-dotted-loader-container {
+        display: flex;
+        align-items: center;
+        margin-top: .4rem;
+        color: var(--app-ai-chat-primary-color);
+    }
+.msg-dotted-loader-text {
+    transform: translateY(-10%);
+}
+.msg-dotted-loader {
+    position: relative;
+    text-align: center;
+    display: inline-block;
+    width: calc(var(--app-ai-chat-msg-dotted-loader-size) * 1.5);
+    height: calc(var(--app-ai-chat-msg-dotted-loader-size) * 1.5);
+    margin-right: .3rem;
+}
+.msg-dotted-loader::after ,
+.msg-dotted-loader::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--app-ai-chat-msg-dotted-loader-size);
+    height: var(--app-ai-chat-msg-dotted-loader-size);
+    border-radius: 50%;
+    border: 2px var(--app-ai-chat-primary-color);
+    border-style: dotted solid dotted solid;
+    animation: turn-left 1.5s linear infinite;
+}
+.msg-dotted-loader::before {
+    left: calc(var(--app-ai-chat-msg-dotted-loader-size)/2/2 * -1);
+    top: calc(var(--app-ai-chat-msg-dotted-loader-size)/2/2 * -1);
+    width: calc(var(--app-ai-chat-msg-dotted-loader-size) + var(--app-ai-chat-msg-dotted-loader-size)/2);
+    height: calc(var(--app-ai-chat-msg-dotted-loader-size) + var(--app-ai-chat-msg-dotted-loader-size)/2);
+    border-style: dotted dotted solid solid;
+    animation: msg-dotted-loader-anim--turn-right 1.5s linear infinite;
+}
+@keyframes msg-dotted-loader-anim--turn-right {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+@keyframes turn-left {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(-360deg);
+    }
+}
