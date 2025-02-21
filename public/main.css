@@ -29,6 +29,15 @@ body {
     font-size: 13px;
 }
 
+.messages::-webkit-scrollbar {
+    width: 3px;
+}
+
+.messages::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+
 .messages > div {
     margin: 5px 0;
     padding: 3px 5px;

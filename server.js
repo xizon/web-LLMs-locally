@@ -22,9 +22,29 @@ router.post('/generate', async (req, res) => {
 
     try {
 
+        
+
+        // Use AnythingLLM's API  (http://localhost:3001/api/docs/)
+        const ALLM_API_KEY = '7WVB711-8AHMYVN-GTJNVMZ-QYCC57T';
+        const WORKSPACE_NAME = 'test';
+        const response = await axios.post(`http://localhost:3001/api/v1/workspace/${WORKSPACE_NAME}/chat`, {
+            model: 'deepseek-r1:14b-qwen-distill-q4_K_M',
+            message: prompt,
+            mode: 'chat'   // query | chat
+        },
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${ALLM_API_KEY}`
+            }
+        });
+
+        res.json({ reply: response.data.textResponse });
+
 
 
         // Use ollama's API
+        /*
         const response = await axios.post(`http://localhost:11434/api/generate`, {
             model: 'deepseek-r1:14b-qwen-distill-q4_K_M',
             prompt: prompt,
@@ -32,6 +52,7 @@ router.post('/generate', async (req, res) => {
         });
 
         res.json({ reply: response.data.response });
+        */
 
         /*
         const response = await ollama.chat({

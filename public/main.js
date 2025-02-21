@@ -5,6 +5,8 @@ let loadingTimer; // Timer for loading state
 let loadingTime = 0; // Elapsed time in seconds
 
 function clearElapsedTime() {
+    if (document.querySelector('.msg-dotted-loader-container > i') === null) return;
+
     // Stop loading timer
     clearInterval(loadingTimer);
     document.querySelector('.msg-dotted-loader-container > i').innerHTML = ' (0s)';
@@ -13,6 +15,8 @@ function clearElapsedTime() {
 }
 
 function startElapsedTime() {
+    if (document.querySelector('.msg-dotted-loader-container > i') === null) return;
+
     loadingTimer = setInterval(() => {
         loadingTime++;
         document.querySelector('.msg-dotted-loader-container > i').innerHTML = ` (${loadingTime}s)`;
@@ -25,7 +29,9 @@ function startLoading() {
     messages.push({ sender: 'AI', type: 'reply', timestamp:  new Date().toLocaleTimeString(), content: '<div class="msg-dotted-loader-container "><span class="msg-dotted-loader"></span><span class="msg-dotted-loader-text">Thinking...</span><i> (0s)</i></div>' }); // Add AI reply to array
 
     // start elapsedTime
-    startElapsedTime();
+    setTimeout(() => {
+        startElapsedTime();
+    }, 500);
 }
 
 function stopLoading() {
@@ -190,7 +196,7 @@ function debounce(func, delay) {
     };
 }
 
-function typewriterEffect(element, str, speed = 50) {
+function typewriterEffect(messagesDiv, element, str, speed = 50) {
     if (!element) return;
 
     const originalHTML = str;
@@ -231,6 +237,7 @@ function typewriterEffect(element, str, speed = 50) {
             cursor++;
         }
 
+        messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to the bottom
         element.innerHTML = tempHTML + '<span class="cursor">|</span>'; // Show cursor
         setTimeout(type, speed);
     }
@@ -249,7 +256,7 @@ function renderMessages() {
         messagesDiv.appendChild(messageDiv);
 
         if (msg.type === 'reply' && index === messages.length - 1) {
-            typewriterEffect([].slice.call(messagesDiv.querySelectorAll('.reply')).at(-1).querySelector('.content'), msg.content, 10);
+            typewriterEffect(messagesDiv, [].slice.call(messagesDiv.querySelectorAll('.reply')).at(-1).querySelector('.content'), msg.content, 10);
         }
     });
     messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to the bottom
